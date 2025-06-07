@@ -1,5 +1,9 @@
 from fastapi import APIRouter, File, UploadFile, HTTPException
 import os
+from db import get_connection, release_connection
+import uuid
+from datetime import datetime
+from utils.get_video_codec import get_video_codec
 
 router = APIRouter()
 UPLOAD_DIR = "uploads"
@@ -15,5 +19,40 @@ async def upload_video(file: UploadFile = File(...)):
     file_path = os.path.join(UPLOAD_DIR, file.filename)
     with open(file_path, "wb") as buffer:
         buffer.write(await file.read())
+
+    # create transaction in DB
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+
+        transaction_id = str(uuid.uuid4())
+        user_id = os.getenv("DEFAULT_USER_ID")
+        codec = get_video_codec(file_path)
+
+        cur.execute(
+            """
+            INSERT INTO transactions (
+                transaction_id, user_id, filename, stored_path_original, original_format, 
+                original_codec, target_format, target_codec, status, start_time, updated_time
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """,
+            (
+                transaction_id,
+                user_id,
+                file.filename,
+                file_path,
+                file.filename.split(".")[-1],
+                codec,
+                "mp4", # set target_format to "mp4" default for now, can change dynamically according to user's req later
+                "h265",
+                "Pending",
+                datetime.now(),
+                datetime.now()
+            )
+        )
+        conn.commit()
+        cur.close()
+    finally:
+        release_connection(conn)
     
     return {"message": "File uploaded successfully", "filename": file.filename}
