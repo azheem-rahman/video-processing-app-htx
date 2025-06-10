@@ -1,10 +1,6 @@
 import os
 from psycopg2 import pool
 
-DB_HOST = os.getenv("DB_HOST", "localhost")
-DB_PORT = os.getenv("DB_PORT", "5432")
-DB_NAME = os.getenv("DB_NAME", "video_processing")
-
 connection_pool = pool.SimpleConnectionPool(
     minconn=1,
     maxconn=10,
