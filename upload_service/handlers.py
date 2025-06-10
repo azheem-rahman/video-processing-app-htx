@@ -4,9 +4,9 @@ from datetime import datetime
 
 from fastapi import APIRouter, File, UploadFile, HTTPException
 
-from db.db import get_connection, release_connection
-from utils.get_video_codec import get_video_codec
-from utils.enqueue import enqueue_conversion_task
+from db.connection import get_connection, release_connection
+from upload_service.utils.get_video_codec import get_video_codec
+from upload_service.utils.enqueue import enqueue_conversion_task
 
 router = APIRouter()
 UPLOAD_DIR = "uploads"
