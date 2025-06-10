@@ -20,3 +20,6 @@ __pycache__/
 
 # Uploaded files
 uploads/
+
+# Converted files
+converted/
