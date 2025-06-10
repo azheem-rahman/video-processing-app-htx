@@ -43,6 +43,23 @@ services:
       - redis
       - postgres
 
+  query_service:
+    build:
+      context: .
+      dockerfile: query_service/Dockerfile
+    container_name: query_service
+    ports:
+      - "8001:8000"
+    environment:
+      - DEFAULT_USER_ID=45c0d605-4b1f-4aef-bc7a-0ff819c49398
+      - REDIS_HOST=redis
+      - POSTGRES_HOST=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=mydb
+    depends_on:
+      - postgres
+
   redis:
     image: redis:7
     ports:
