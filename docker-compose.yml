@@ -1,0 +1,71 @@
+version: "3.9"
+
+services:
+  upload_service:
+    build:
+      context: ./upload_service
+      dockerfile: Dockerfile
+    container_name: upload_service
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - ./upload_service/uploads:/app/uploads
+      - ./upload_service/converted:/app/converted
+    environment:
+      - DEFAULT_USER_ID=45c0d605-4b1f-4aef-bc7a-0ff819c49398
+      - REDIS_HOST=redis
+      - POSTGRES_HOST=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=mydb
+
+  upload_worker:
+    build:
+      context: ./upload_service
+      dockerfile: Dockerfile
+    container_name: upload_worker
+    command: ["python", "worker.py"]
+    volumes:
+      - ./upload_service/uploads:/app/uploads
+      - ./upload_service/converted:/app/converted
+    environment:
+      - DEFAULT_USER_ID=45c0d605-4b1f-4aef-bc7a-0ff819c49398
+      - REDIS_HOST=redis
+      - POSTGRES_HOST=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=mydb
+    depends_on:
+      - redis
+      - upload_service
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: mydb
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./schema.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "55432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 3s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:

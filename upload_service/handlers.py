@@ -1,9 +1,12 @@
-from fastapi import APIRouter, File, UploadFile, HTTPException
 import os
-from db import get_connection, release_connection
 import uuid
 from datetime import datetime
+
+from fastapi import APIRouter, File, UploadFile, HTTPException
+
+from db.db import get_connection, release_connection
 from utils.get_video_codec import get_video_codec
+from utils.enqueue import enqueue_conversion_task
 
 router = APIRouter()
 UPLOAD_DIR = "uploads"
@@ -54,5 +57,10 @@ async def upload_video(file: UploadFile = File(...)):
         cur.close()
     finally:
         release_connection(conn)
+
+    # queue task to Convert Service
+    output_filename = f"{transaction_id}_{file.filename}"
+    output_path = os.path.join("converted", output_filename)
+    enqueue_conversion_task(transaction_id, file_path, output_path)
     
     return {"message": "File uploaded successfully", "filename": file.filename}
