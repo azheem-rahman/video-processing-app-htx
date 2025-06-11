@@ -12,13 +12,16 @@ router = APIRouter()
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
+
 @router.post("/upload")
 async def upload_video(file: UploadFile = File(...)):
     # check that file is a video
     if not file.content_type.startswith("video/"):
-        raise HTTPException(status_code=400, detail="Invalid file type. Only videos are allowed.")
-    
-    # save uploaded video to /uploads folder
+        raise HTTPException(
+            status_code=400, detail="Invalid file type. Only videos are allowed."
+        )
+
+    # save uploaded video to /storage/uploads folder
     file_path = os.path.join(UPLOAD_DIR, file.filename)
     with open(file_path, "wb") as buffer:
         buffer.write(await file.read())
@@ -46,12 +49,12 @@ async def upload_video(file: UploadFile = File(...)):
                 file_path,
                 file.filename.split(".")[-1],
                 codec,
-                "mp4", # set target_format to "mp4" default for now, can change dynamically according to user's req later
+                "mp4",  # set target_format to "mp4" default for now, can change dynamically according to user's req later
                 "h265",
                 "Pending",
                 datetime.now(),
-                datetime.now()
-            )
+                datetime.now(),
+            ),
         )
         conn.commit()
         cur.close()
@@ -61,6 +64,11 @@ async def upload_video(file: UploadFile = File(...)):
     # queue task to Convert Service
     output_filename = f"{transaction_id}_{file.filename}"
     output_path = os.path.join("converted", output_filename)
+
     enqueue_conversion_task(transaction_id, file_path, output_path)
-    
-    return {"message": "File uploaded successfully", "filename": file.filename}
+
+    return {
+        "message": "File uploaded successfully",
+        "filename": file.filename,
+        "transaction_id": transaction_id,
+    }

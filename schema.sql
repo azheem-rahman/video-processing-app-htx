@@ -9,6 +9,7 @@ CREATE TABLE transactions (
     target_format VARCHAR(10),
     target_codec VARCHAR(20),
     status TEXT CHECK (status IN ('Pending', 'Converting', 'Completed', 'Failed', 'Retrying')),
+    error_reason TEXT,
     start_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
