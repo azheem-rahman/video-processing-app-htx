@@ -28,6 +28,7 @@ async def upload_video(file: UploadFile = File(...)):
 
     # create transaction in DB
     conn = get_connection()
+
     try:
         cur = conn.cursor()
 
@@ -58,14 +59,20 @@ async def upload_video(file: UploadFile = File(...)):
         )
         conn.commit()
         cur.close()
+
+        # queue task to Convert Service
+        output_filename = f"{transaction_id}_{file.filename}"
+        output_path = os.path.join("converted", output_filename)
+
+        enqueue_conversion_task(transaction_id, file_path, output_path)
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Failed to process upload: ${str(e)}"
+        )
+
     finally:
         release_connection(conn)
-
-    # queue task to Convert Service
-    output_filename = f"{transaction_id}_{file.filename}"
-    output_path = os.path.join("converted", output_filename)
-
-    enqueue_conversion_task(transaction_id, file_path, output_path)
 
     return {
         "message": "File uploaded successfully",
