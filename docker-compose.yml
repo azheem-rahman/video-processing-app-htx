@@ -73,7 +73,7 @@ services:
       dockerfile: download_service/Dockerfile
     container_name: download_service
     volumes:
-      - ./converted:/app/converted
+      - ./storage/converted:/app/converted
     environment:
       - POSTGRES_HOST=postgres
       - POSTGRES_USER=postgres
