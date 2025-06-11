@@ -1,13 +1,14 @@
 import os
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import FileResponse
 
 from db.connection import get_connection, release_connection
 
 router = APIRouter()
 
+
 @router.get("/download")
-async def download(user_id: str, transaction_id: str):
+async def download(user_id: str = Query(...), transaction_id: str = Query(...)):
     conn = get_connection()
 
     try:
@@ -20,7 +21,7 @@ async def download(user_id: str, transaction_id: str):
             FROM transactions
             WHERE transaction_id = %s
             """,
-            (transaction_id,)
+            (transaction_id,),
         )
 
         row = cur.fetchone()
@@ -28,7 +29,7 @@ async def download(user_id: str, transaction_id: str):
 
         if row is None:
             raise HTTPException(status_code=404, detail="Transaction not found")
-        
+
         db_user_id, stored_path_converted, status = row
 
         # check that user_id provided matches user_id of transaction
@@ -38,16 +39,16 @@ async def download(user_id: str, transaction_id: str):
         # check that status is "Completed" and stored_path_converted is not null
         if status != "Completed" or not stored_path_converted:
             raise HTTPException(status_code=409, detail="File not ready for download")
-        
+
         # check file exists on disk
         if not os.path.isfile(stored_path_converted):
             raise HTTPException(status_code=500, detail="Converted file missing")
-        
+
         return FileResponse(
             stored_path_converted,
             media_type="application/octet-stream",
-            filename=os.path.basename(stored_path_converted)
+            filename=os.path.basename(stored_path_converted),
         )
-    
+
     finally:
         release_connection(conn)
