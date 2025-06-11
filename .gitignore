@@ -19,7 +19,7 @@ __pycache__/
 *.log
 
 # Uploaded files
-uploads/
+storage/uploads/
 
 # Converted files
-converted/
+storage/converted/

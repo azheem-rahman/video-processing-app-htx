@@ -24,8 +24,8 @@ services:
       redis:
         condition: service_started
     volumes:
-      - ./uploads:/app/uploads
-      - ./converted:/app/converted
+      - ./storage/uploads:/app/uploads
+      - ./storage/converted:/app/converted
     environment:
       - DEFAULT_USER_ID=45c0d605-4b1f-4aef-bc7a-0ff819c49398
       - REDIS_HOST=redis
@@ -40,8 +40,8 @@ services:
       dockerfile: convert_service/Dockerfile
     container_name: convert_service
     volumes:
-      - ./uploads:/app/uploads
-      - ./converted:/app/converted
+      - ./storage/uploads:/app/uploads
+      - ./storage/converted:/app/converted
     environment:
       - DEFAULT_USER_ID=45c0d605-4b1f-4aef-bc7a-0ff819c49398
       - REDIS_HOST=redis
