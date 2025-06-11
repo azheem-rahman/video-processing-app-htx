@@ -4,7 +4,6 @@ CREATE TABLE transactions (
     filename TEXT NOT NULL,
     stored_path_original TEXT NOT NULL,
     stored_path_converted TEXT,
-    download_link TEXT,
     original_format VARCHAR(10),
     original_codec VARCHAR(20),
     target_format VARCHAR(10),
