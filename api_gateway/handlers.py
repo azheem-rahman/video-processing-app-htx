@@ -1,0 +1,45 @@
+from fastapi import APIRouter, Request
+import httpx
+import os
+
+router = APIRouter()
+
+UPLOAD_SERVICE_URL = os.getenv("UPLOAD_SERVICE_URL", "http://upload_service:8000")
+QUERY_SERVICE_URL = os.getenv("QUERY_SERVICE_URL", "http://query_service:8000")
+DOWNLOAD_SERVICE_URL = os.getenv("DOWNLOAD_SERVICE_URL", "http://download_service:8000")
+
+
+@router.post("/upload")
+async def proxy_upload(req: Request):
+    async with httpx.AsyncClient() as client:
+        body = await req.body()
+
+        headers = dict(req.headers)
+
+        res = await client.post(
+            f"{UPLOAD_SERVICE_URL}/upload", content=body, headers=headers
+        )
+
+        return res.json()
+
+
+@router.get("/status")
+async def proxy_status(user_id: str, transaction_id: str):
+    async with httpx.AsyncClient() as client:
+        res = await client.get(
+            f"{QUERY_SERVICE_URL}/status",
+            params={"user_id": user_id, "transaction_id": transaction_id},
+        )
+
+        return res.json()
+
+
+@router.get("/download")
+async def proxy_download(user_id: str, transaction_id: str):
+    async with httpx.AsyncClient() as client:
+        res = await client.get(
+            f"{DOWNLOAD_SERVICE_URL}/download",
+            params={"user_id": user_id, "transaction_id": transaction_id},
+        )
+
+        return res.content

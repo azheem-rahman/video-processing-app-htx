@@ -1,13 +1,23 @@
 version: "3.9"
 
 services:
+  api_gateway:
+    build:
+      context: .
+      dockerfile: api_gateway/Dockerfile
+    container_name: api_gateway
+    ports:
+      - "8000:8000"
+    depends_on:
+      - upload_service
+      - query_service
+      - download_service
+
   upload_service:
     build:
       context: .
       dockerfile: upload_service/Dockerfile
     container_name: upload_service
-    ports:
-      - "8000:8000"
     depends_on:
       postgres:
         condition: service_healthy
@@ -48,8 +58,6 @@ services:
       context: .
       dockerfile: query_service/Dockerfile
     container_name: query_service
-    ports:
-      - "8001:8000"
     environment:
       - POSTGRES_HOST=postgres
       - POSTGRES_USER=postgres
@@ -64,8 +72,6 @@ services:
       context: .
       dockerfile: download_service/Dockerfile
     container_name: download_service
-    ports:
-      - "8002:8000"
     volumes:
       - ./converted:/app/converted
     environment:
