@@ -51,14 +51,31 @@ services:
     ports:
       - "8001:8000"
     environment:
-      - DEFAULT_USER_ID=45c0d605-4b1f-4aef-bc7a-0ff819c49398
-      - REDIS_HOST=redis
       - POSTGRES_HOST=postgres
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=mydb
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+
+  download_service:
+    build:
+      context: .
+      dockerfile: download_service/Dockerfile
+    container_name: download_service
+    ports:
+      - "8002:8000"
+    volumes:
+      - ./converted:/app/converted
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=mydb
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   redis:
     image: redis:7
@@ -79,7 +96,7 @@ services:
       - "55432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 3s
+      interval: 5s
       timeout: 5s
       retries: 5
 
