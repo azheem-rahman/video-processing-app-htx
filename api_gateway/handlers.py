@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Response
 import httpx
 import os
 
@@ -20,7 +20,12 @@ async def proxy_upload(req: Request):
             f"{UPLOAD_SERVICE_URL}/upload", content=body, headers=headers
         )
 
-        return res.json()
+        return Response(
+            content=res.content,
+            status_code=res.status_code,
+            headers=res.headers,
+            media_type=res.headers.get("content-type"),
+        )
 
 
 @router.get("/status")
@@ -31,7 +36,12 @@ async def proxy_status(user_id: str, transaction_id: str):
             params={"user_id": user_id, "transaction_id": transaction_id},
         )
 
-        return res.json()
+        return Response(
+            content=res.content,
+            status_code=res.status_code,
+            headers=res.headers,
+            media_type=res.headers.get("content-type"),
+        )
 
 
 @router.get("/download")
@@ -42,4 +52,9 @@ async def proxy_download(user_id: str, transaction_id: str):
             params={"user_id": user_id, "transaction_id": transaction_id},
         )
 
-        return res.content
+        return Response(
+            content=res.content,
+            status_code=res.status_code,
+            headers=res.headers,
+            media_type=res.headers.get("content-type"),
+        )
