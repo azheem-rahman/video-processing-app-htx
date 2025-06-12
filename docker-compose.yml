@@ -104,5 +104,12 @@ services:
       timeout: 5s
       retries: 5
 
+  test-runner:
+    build:
+      context: ./test_script
+      dockerfile: Dockerfile
+    depends_on:
+      - api_gateway
+
 volumes:
   pgdata:
