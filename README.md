@@ -204,4 +204,7 @@ Password: password
 - Show real-time conversion progress or job queue status
 - Enable optional thumbnail or preview generation
 - Support uploading to and downloading from cloud storage e.g. S3
-- Autoscale
+- Autoscale services based on load using Docker Swarm/Kubernetes
+- Implement unit tests and integration tests for individual services
+- Add retry mechanism and utilise "Retrying" status in DB for failed conversions
+- Improve fault tolerance and service recovery in case of job failures
