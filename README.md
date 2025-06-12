@@ -49,17 +49,18 @@ Password: password
 
 ## Tech Stack
 
-| Tool/Library       | Role                                                                                   |
-| ------------------ | -------------------------------------------------------------------------------------- |
-| **FastAPI**        | Web framework for API endpoints and services                                           |
-| **Starlette**      | Used internally by FastAPI (e.g. `JSONResponse`)                                       |
-| **Redis + RQ**     | Message broker and queue for async jobs                                                |
-| **PostgreSQL**     | Main database (exposed on port `55432`)                                                |
-| **Uvicorn**        | ASGI server to run FastAPI apps                                                        |
-| **httpx**          | Async HTTP client used in API Gateway                                                  |
-| **psycopg2**       | PostgreSQL database driver                                                             |
-| **FFmpeg**         | Video conversion tool for format conversion (ffmpeg) and metadata extraction (ffprobe) |
-| **Docker Compose** | Service orchestration                                                                  |
+| Tool/Library               | Role                                                                                   |
+| -------------------------- | -------------------------------------------------------------------------------------- |
+| **FastAPI**                | Web framework for API endpoints and services                                           |
+| **Starlette**              | Used internally by FastAPI (e.g. `JSONResponse`)                                       |
+| **Redis + RQ**             | Message broker and queue for async jobs                                                |
+| **PostgreSQL**             | Main database (exposed on port `55432`)                                                |
+| **Uvicorn**                | ASGI server to run FastAPI apps                                                        |
+| **httpx**                  | Async HTTP client used in API Gateway                                                  |
+| **psycopg2**               | PostgreSQL database driver                                                             |
+| **FFmpeg**                 | Video conversion tool for format conversion (ffmpeg) and metadata extraction (ffprobe) |
+| **Docker Compose**         | Service orchestration                                                                  |
+| **Dockerised Test Runner** | For automated end to end testing using requests and Python                             |
 
 ## Architecture
 
@@ -114,6 +115,7 @@ Password: password
   - If a video file is missing: `400` with message `You must include a video file in the request form-data.`
   - If wrong file type: `400` with message `Invalid file type. Only videos are allowed.`
   - If query parameters are missing: `400` with `Missing required parameter(s): ...`
+  - If query parameters not valid type (UUID): `400` with `Invalid UUID format for parameter: '{param}'`
 
 - **Job Status Errors**:
 
@@ -128,44 +130,49 @@ Password: password
 ```
 .
 ├── api_gateway/
-│   ├── Dockerfile              # Docker config for API Gateway
-│   ├── handlers.py             # defines proxy endpoints (/upload, /status, /download)
-│   ├── main.py                 # starts FastAPI app and includes exception handler
-│   └── requirements.txt        # dependencies for API Gateway
+│   ├── Dockerfile                    # Docker config for API Gateway
+│   ├── handlers.py                   # defines proxy endpoints (/upload, /status, /download)
+│   ├── main.py                       # starts FastAPI app and includes exception handler
+│   └── requirements.txt              # dependencies for API Gateway
 ├── convert_service/
 │   ├── tasks/
-|   │   └── convert_video.py    # core logic to run FFmpeg conversion and update DB accordingly
-│   ├── Dockerfile              # Docker config for Convert Service
-│   ├── main.py                 # initialise RQ worker and listens for tasks from Redis queue
-│   └── requirements.txt        # dependencies for Convert Service
+|   │   └── convert_video.py          # core logic to run FFmpeg conversion and update DB accordingly
+│   ├── Dockerfile                    # Docker config for Convert Service
+│   ├── main.py                       # initialise RQ worker and listens for tasks from Redis queue
+│   └── requirements.txt              # dependencies for Convert Service
 ├── db/
-│   └── connection.py           # PostgreSQL connection pool shared across services
+│   └── connection.py                 # PostgreSQL connection pool shared across services
 ├── download_service/
-│   ├── Dockerfile              # Docker config for Download Service
-│   ├── handlers.py             # handles file download endpoint (/download)
-│   ├── main.py                 # starts FastAPI app
-│   └── requirements.txt        # dependencies for Download Service
+│   ├── Dockerfile                    # Docker config for Download Service
+│   ├── handlers.py                   # handles file download endpoint (/download)
+│   ├── main.py                       # starts FastAPI app
+│   └── requirements.txt              # dependencies for Download Service
 ├── query_service/
-│   ├── Dockerfile              # Docker config for Query Service
-│   ├── handlers.py             # handles file query endpoint (/status)
-│   ├── main.py                 # starts FastAPI app
-│   └── requirements.txt        # dependencies for Query Service
+│   ├── Dockerfile                    # Docker config for Query Service
+│   ├── handlers.py                   # handles file query endpoint (/status)
+│   ├── main.py                       # starts FastAPI app
+│   └── requirements.txt              # dependencies for Query Service
 ├── storage/
-│   ├── converted/              # folder to store converted videos on local storage (auto-created if does not exist)
-│   └── uploads/                # folder to store original uploaded videos on local storage (auto-created if does not exist)
+│   ├── converted/                    # folder to store converted videos on local storage (auto-created if does not exist)
+│   └── uploads/                      # folder to store original uploaded videos on local storage (auto-created if does not exist)
+├── test_script/
+│   ├── Dockerfile                    # defines the test-runner container to automate integration testing
+│   ├── downloaded.mp4                # output file: downloaded converted video saved after a successful test run
+│   ├── SampleVideo_1280x720_1mb.mp4  # input file: sample video used for upload test
+│   └── test_workflow.py              # integration test script that uploads, query, and downloads result
 ├── upload_service/
 │   ├── utils/
-|   │   ├── enqueue.py          # helper function to enqueue task to Redis queue
-|   │   └── get_video_codec.py  # helper function to get original codec using ffprobe
-│   ├── Dockerfile              # Docker config for Upload Service
-│   ├── handlers.py             # handles file upload endpoint (/upload)
-│   ├── main.py                 # starts FastAPI app and includes exception handler
-│   └── requirements.txt        # dependencies for Upload Service
+|   │   ├── enqueue.py                # helper function to enqueue task to Redis queue
+|   │   └── get_video_codec.py        # helper function to get original codec using ffprobe
+│   ├── Dockerfile                    # Docker config for Upload Service
+│   ├── handlers.py                   # handles file upload endpoint (/upload)
+│   ├── main.py                       # starts FastAPI app and includes exception handler
+│   └── requirements.txt              # dependencies for Upload Service
 ├── .gitignore
 ├── Architecture Diagram.jpg
-├── docker-compose.yml          # orchestration file to run all services
+├── docker-compose.yml                # orchestration file to run all services
 ├── README.md
-└── schema.sql                  # SQL schema to initialise PostgreSQL DB
+└── schema.sql                        # SQL schema to initialise PostgreSQL DB
 
 ```
 
