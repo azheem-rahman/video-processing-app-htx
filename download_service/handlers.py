@@ -1,6 +1,7 @@
 import os
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import FileResponse
+from uuid import UUID
 
 from db.connection import get_connection, release_connection
 
@@ -8,7 +9,7 @@ router = APIRouter()
 
 
 @router.get("/download")
-async def download(user_id: str = Query(...), transaction_id: str = Query(...)):
+async def download(user_id: UUID = Query(...), transaction_id: UUID = Query(...)):
     conn = get_connection()
 
     try:
@@ -21,7 +22,7 @@ async def download(user_id: str = Query(...), transaction_id: str = Query(...)):
             FROM transactions
             WHERE transaction_id = %s
             """,
-            (transaction_id,),
+            (str(transaction_id),),
         )
 
         row = cur.fetchone()
@@ -33,7 +34,7 @@ async def download(user_id: str = Query(...), transaction_id: str = Query(...)):
         db_user_id, stored_path_converted, status = row
 
         # check that user_id provided matches user_id of transaction
-        if db_user_id != user_id:
+        if db_user_id != str(user_id):
             raise HTTPException(status_code=403, detail="Forbidden")
 
         # check that status is "Completed" and stored_path_converted is not null

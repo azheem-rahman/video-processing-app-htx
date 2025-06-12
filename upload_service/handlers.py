@@ -1,8 +1,9 @@
 import os
 import uuid
+from uuid import UUID
 from datetime import datetime
 
-from fastapi import APIRouter, File, UploadFile, HTTPException
+from fastapi import APIRouter, File, UploadFile, HTTPException, Query
 
 from db.connection import get_connection, release_connection
 from upload_service.utils.get_video_codec import get_video_codec
@@ -14,7 +15,7 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
 @router.post("/upload")
-async def upload_video(file: UploadFile = File(...)):
+async def upload_video(user_id: UUID = Query(...), file: UploadFile = File(...)):
     # check that file is a video
     if not file.content_type.startswith("video/"):
         raise HTTPException(
@@ -32,8 +33,7 @@ async def upload_video(file: UploadFile = File(...)):
     try:
         cur = conn.cursor()
 
-        transaction_id = str(uuid.uuid4())
-        user_id = os.getenv("DEFAULT_USER_ID")
+        generated_transaction_id = str(uuid.uuid4())
         codec = get_video_codec(file_path)
 
         cur.execute(
@@ -44,8 +44,8 @@ async def upload_video(file: UploadFile = File(...)):
             ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """,
             (
-                transaction_id,
-                user_id,
+                generated_transaction_id,
+                str(user_id),
                 file.filename,
                 file_path,
                 file.filename.split(".")[-1],
@@ -61,10 +61,10 @@ async def upload_video(file: UploadFile = File(...)):
         cur.close()
 
         # queue task to Convert Service
-        output_filename = f"{transaction_id}_{file.filename}"
+        output_filename = f"{generated_transaction_id}_{file.filename}"
         output_path = os.path.join("converted", output_filename)
 
-        enqueue_conversion_task(transaction_id, file_path, output_path)
+        enqueue_conversion_task(generated_transaction_id, file_path, output_path)
 
     except Exception as e:
         raise HTTPException(
@@ -77,5 +77,5 @@ async def upload_video(file: UploadFile = File(...)):
     return {
         "message": "File uploaded successfully",
         "filename": file.filename,
-        "transaction_id": transaction_id,
+        "transaction_id": generated_transaction_id,
     }
