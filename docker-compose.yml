@@ -27,7 +27,6 @@ services:
       - ./storage/uploads:/app/uploads
       - ./storage/converted:/app/converted
     environment:
-      - DEFAULT_USER_ID=45c0d605-4b1f-4aef-bc7a-0ff819c49398
       - REDIS_HOST=redis
       - POSTGRES_HOST=postgres
       - POSTGRES_USER=postgres
@@ -43,7 +42,6 @@ services:
       - ./storage/uploads:/app/uploads
       - ./storage/converted:/app/converted
     environment:
-      - DEFAULT_USER_ID=45c0d605-4b1f-4aef-bc7a-0ff819c49398
       - REDIS_HOST=redis
       - POSTGRES_HOST=postgres
       - POSTGRES_USER=postgres
